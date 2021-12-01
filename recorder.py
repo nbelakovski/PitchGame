@@ -5,6 +5,9 @@ import numpy as np
 from scipy import signal
 import wave
 
+from pyqtgraph.Qt import QtGui, QtCore
+import pyqtgraph as pg
+
 FORMAT = pyaudio.paInt16
 CHANNELS = 1
 RATE = 44100
@@ -29,7 +32,7 @@ rng = np.random.default_rng()
 low = 98
 high = 350
 # while True:  # or until ctrl+d
-#     pitch = rng.random() * (high - low) + low
+pitch = rng.random() * (high - low) + low
 #     print("WIP")
 
 for i in range(0, int(RATE / CHUNK * RECORD_SECONDS)):
@@ -55,9 +58,9 @@ waveFile.setsampwidth(audio.get_sample_size(FORMAT))
 waveFile.setframerate(RATE)
 waveFile.writeframes(b''.join(frames))
 waveFile.close()
-plt.plot(f, P)
+pg.plot(f, P)
 s = SineWave()
-s.set_frequency(f[idx])
+s.set_frequency(pitch)
 s.play()
-plt.show()
+pg.exec()
 s.stop()
