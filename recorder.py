@@ -1,65 +1,43 @@
 import pyaudio
 from pysinewave import SineWave
-import matplotlib.pyplot as plt
 import numpy as np
 from scipy import signal
-import wave
 
-from pyqtgraph.Qt import QtGui, QtCore
+from pyqtgraph.Qt import QtCore
 import pyqtgraph as pg
 
+
+# Set up display
 win = pg.GraphicsLayoutWidget(show=True, title="PitchGame")
 win.resize(1000,600)
 win.setWindowTitle('the game to train your ear')
-
-FORMAT = pyaudio.paInt16
-CHANNELS = 1
-RATE = 176400
-CHUNK = 8192*2
-RECORD_SECONDS = 1
-WAVE_OUTPUT_FILENAME = "file.wav"
-
-# start Recording
-
-print("recording...")
-frames = []
-# pick a random number between 98 (G2) and 350 (F4)
-# generate the tone with sinewave for 2 seconds
-# record for 2 seconds displaying delta between
-# detected pitch and chosen pitch
-#
-rng = np.random.default_rng()
-low = 98
-high = 350
-# while True:  # or until ctrl+d
-pitch = rng.random() * (high - low) + low
-#     print("WIP")
-
 p6 = win.addPlot(title="The freq")
 p6.setXRange(-200, 200)
 p6.setYRange(0, 10000)
 p6.showGrid(x=True, y=True, alpha=1)
 curve = p6.plot(pen='y')
+
+# Set up recording
+FORMAT = pyaudio.paInt16
+CHANNELS = 1
+RATE = 176400
+CHUNK = 8192*2
 audio = pyaudio.PyAudio()
 stream = audio.open(format=FORMAT, channels=CHANNELS,
-                rate=RATE, input=True,
-                frames_per_buffer=CHUNK)
+                    rate=RATE, input=True,
+                    frames_per_buffer=CHUNK)
+
+# Set up pitch variation from D2 (73) to F4 (350)
+rng = np.random.default_rng()
+low = 73
+high = 350
 pitch = 0
-def newpitch():
-    global pitch
-    pitch = rng.random() * (high - low) + low
-    return pitch
 
 def update():
-    
-    # for i in range(0, int(RATE / CHUNK * RECORD_SECONDS)):
     data = stream.read(CHUNK)
     numpydata = np.frombuffer(data, dtype=np.int16)
     f, P = signal.periodogram(numpydata, RATE)
     curve.setData(f-pitch, P)
-    print("P:", max(P))
-    # idx = signal.find_peaks(P, height=10000)[0][0]
-    # print("f: ", f[idx])
 
 
 s = SineWave(pitch=0, pitch_per_second=1e3)
@@ -68,15 +46,13 @@ def play():
     if play.index % 2 == 0:
         s.stop()
         return
-    
-    s.set_frequency(newpitch())
-    s.play()
-
-
-    
+    global pitch
+    pitch = rng.random() * (high - low) + low
+    s.set_frequency(pitch)
+    s.play()  
 play.index = 0
-print("finished recording")
-# print(dir(data))
+
+
 timer = QtCore.QTimer()
 timer.timeout.connect(update)
 timer.start(50)
@@ -87,17 +63,3 @@ pg.exec()
 stream.stop_stream()
 stream.close()
 audio.terminate()
-
-
-
-# waveFile = wave.open(WAVE_OUTPUT_FILENAME, 'wb')
-# waveFile.setnchannels(CHANNELS)
-# waveFile.setsampwidth(audio.get_sample_size(FORMAT))
-# waveFile.setframerate(RATE)
-# waveFile.writeframes(b''.join(frames))
-# waveFile.close()
-# pg.plot(f, P)
-# s = SineWave()
-# s.set_frequency(pitch)
-# s.play()
-# s.stop()
