@@ -5,6 +5,7 @@ from scipy import signal
 
 from pyqtgraph.Qt import QtCore
 import pyqtgraph as pg
+import sys
 
 
 # Set up display
@@ -29,12 +30,16 @@ stream = audio.open(format=FORMAT, channels=CHANNELS,
 
 # Set up pitch variation from D2 (73) to F4 (350)
 rng = np.random.default_rng()
-low = 73
-high = 350
+low = 98
+high = 261
 pitch = 0
 
 def update():
-    data = stream.read(CHUNK)
+    try:
+        data = stream.read(CHUNK)
+    except Exception as err:
+        print("Failed to read chunk", err)
+        sys.exit(-1)
     numpydata = np.frombuffer(data, dtype=np.int16)
     f, P = signal.periodogram(numpydata, RATE)
     curve.setData(f-pitch, P)
