@@ -36,7 +36,7 @@ pitch = 0
 
 def update():
     try:
-        data = stream.read(CHUNK)
+        data = stream.read(int(CHUNK*1.5))
     except Exception as err:
         print("Failed to read chunk", err)
         sys.exit(-1)
@@ -45,16 +45,18 @@ def update():
     curve.setData(f-pitch, P)
 
 
-s = SineWave(pitch=0, pitch_per_second=1e3)
+s = SineWave(pitch=0, pitch_per_second=1e3, decibels_per_second=5e3)
+s.set_volume(-100)
+s.play()
 def play():
     play.index += 1
     if play.index % 2 == 0:
-        s.stop()
+        s.set_volume(-100)
         return
     global pitch
     pitch = rng.random() * (high - low) + low
     s.set_frequency(pitch)
-    s.play()  
+    s.set_volume(0)
 play.index = 0
 
 
