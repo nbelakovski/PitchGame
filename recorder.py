@@ -10,7 +10,7 @@ import sys
 
 # Set up display
 win = pg.GraphicsLayoutWidget(show=True, title="PitchGame")
-win.resize(1000,600)
+win.resize(1000, 600)
 win.setWindowTitle('the game to train your ear')
 p6 = win.addPlot(title="The freq")
 p6.setXRange(-200, 200)
@@ -30,9 +30,15 @@ stream = audio.open(format=FORMAT, channels=CHANNELS,
 
 # Set up pitch variation from D2 (73) to F4 (350)
 rng = np.random.default_rng()
-low = 98
-high = 261
+halfstep = 2**(1/12)
+sing_above_tone = True
+num_halfsteps = 7
+scale = halfstep**num_halfsteps if sing_above_tone \
+        else 1/(halfstep**num_halfsteps)
+low = 98/scale
+high = 261/scale
 pitch = 0
+
 
 def update():
     try:
@@ -42,12 +48,14 @@ def update():
         sys.exit(-1)
     numpydata = np.frombuffer(data, dtype=np.int16)
     f, P = signal.periodogram(numpydata, RATE)
-    curve.setData(f-pitch, P)
+    curve.setData(f-pitch*scale, P)
 
 
 s = SineWave(pitch=0, pitch_per_second=1e3, decibels_per_second=5e3)
 s.set_volume(-100)
 s.play()
+
+
 def play():
     play.index += 1
     if play.index % 2 == 0:
@@ -57,6 +65,8 @@ def play():
     pitch = rng.random() * (high - low) + low
     s.set_frequency(pitch)
     s.set_volume(0)
+
+
 play.index = 0
 
 
